@@ -8,23 +8,29 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['owner', 'warehouse_manager', 'shop_manager', 'salesperson'])->default('salesperson')->after('email');
-            $table->foreignId('location_id')->nullable()->after('role')->constrained('locations')->onDelete('set null');
-            $table->boolean('is_active')->default(true)->after('location_id');
-            $table->string('phone', 20)->nullable()->after('is_active');
-            
-            $table->index('role');
-            $table->index('location_id');
-            $table->index('is_active');
+        Schema::create('activity_logs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->string('action', 100);
+            $table->string('table_name', 100)->nullable();
+            $table->unsignedBigInteger('record_id')->nullable();
+            $table->text('details')->nullable();
+            $table->json('old_values')->nullable();
+            $table->json('new_values')->nullable();
+            $table->string('ip_address', 45)->nullable();
+            $table->string('user_agent')->nullable();
+            $table->timestamp('created_at')->nullable();
+
+            $table->index('user_id');
+            $table->index('action');
+            $table->index('table_name');
+            $table->index(['table_name', 'record_id']);
+            $table->index('created_at');
         });
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['location_id']);
-            $table->dropColumn(['role', 'location_id', 'is_active', 'phone']);
-        });
+        Schema::dropIfExists('activity_logs');
     }
 };
